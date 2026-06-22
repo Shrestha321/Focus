@@ -9,6 +9,11 @@ navItems.forEach(item => {
 
     const section = item.dataset.section;
     sectionTitle.textContent = item.textContent.trim();
-    sectionBody.innerHTML = `<p>The ${section} section will be built in an upcoming phase.</p>`;
+
+    if (section === 'sticky') {
+      renderStickyNotes();
+    } else {
+      sectionBody.innerHTML = `<p>The ${section} section will be built in an upcoming phase.</p>`;
+    }
   });
 });
