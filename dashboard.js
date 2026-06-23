@@ -12,6 +12,10 @@ navItems.forEach(item => {
 
     if (section === 'sticky') {
       renderStickyNotes();
+    } else if (section === 'notebook') {
+      renderNotebookHome();
+    } else if (section === 'attendance') {
+      renderAttendance();
     } else {
       sectionBody.innerHTML = `<p>The ${section} section will be built in an upcoming phase.</p>`;
     }
