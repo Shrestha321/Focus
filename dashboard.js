@@ -16,6 +16,8 @@ navItems.forEach(item => {
       renderNotebookHome();
     } else if (section === 'attendance') {
       renderAttendance();
+    } else if (section === 'timetable') {
+      renderTimetable();
     } else {
       sectionBody.innerHTML = `<p>The ${section} section will be built in an upcoming phase.</p>`;
     }
