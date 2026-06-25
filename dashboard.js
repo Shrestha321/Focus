@@ -18,6 +18,8 @@ navItems.forEach(item => {
       renderAttendance();
     } else if (section === 'timetable') {
       renderTimetable();
+    } else if (section === 'roadmap') {
+      renderRoadmap();
     } else {
       sectionBody.innerHTML = `<p>The ${section} section will be built in an upcoming phase.</p>`;
     }
