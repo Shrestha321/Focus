@@ -1,5 +1,5 @@
 const PINS_STORAGE_KEY = 'focus-pins';
-const PIN_TYPE_ICON = { notebook: '📓', sticky: '📌', roadmap: '🎯' };
+const PIN_TYPE_ICON = { notebook: '📓', sticky: '📌', roadmap: '🎯', file: '📁' };
 
 function getPinsData() {
   const data = localStorage.getItem(PINS_STORAGE_KEY);
@@ -53,6 +53,13 @@ function getPinDisplayLabel(item) {
     if (!goal) return { label: 'Goal (deleted)', sub: '', missing: true };
     return { label: goal.title, sub: goal.deadline ? 'Due ' + formatDate(goal.deadline) : '' };
   }
+  if (item.type === 'file') {
+    const data = getFilesData();
+    const subject = data.subjects.find(s => s.id === item.subjectId);
+    const file = subject && subject.files.find(f => f.id === item.fileId);
+    if (!file) return { label: 'File (deleted)', sub: '', missing: true };
+    return { label: file.name, sub: subject.name };
+  }
   return { label: 'Item', sub: '', missing: true };
 }
 
@@ -61,7 +68,7 @@ function renderPins() {
   const data = getPinsData();
 
   if (data.items.length === 0) {
-    sectionBody.innerHTML = `<div class="pin-empty">No pins yet. Pin a notebook chapter, sticky note, or roadmap goal to see it here for quick access.</div>`;
+    sectionBody.innerHTML = `<div class="pin-empty">No pins yet. Pin a notebook chapter, sticky note, roadmap goal, or file to see it here for quick access.</div>`;
     return;
   }
 
@@ -97,7 +104,7 @@ function renderPins() {
 }
 
 function openPinTarget(item) {
-  const sectionMap = { notebook: 'notebook', sticky: 'sticky', roadmap: 'roadmap' };
+  const sectionMap = { notebook: 'notebook', sticky: 'sticky', roadmap: 'roadmap', file: 'files' };
   const targetSection = sectionMap[item.type];
   if (targetSection) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -122,5 +129,7 @@ function openPinTarget(item) {
     }, 50);
   } else if (item.type === 'roadmap') {
     renderGoalCanvas(item.goalId);
+  } else if (item.type === 'file') {
+    renderSubjectFiles(item.subjectId);
   }
 }

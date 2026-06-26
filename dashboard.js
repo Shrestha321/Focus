@@ -24,6 +24,8 @@ navItems.forEach(item => {
       renderPins();
     } else if (section === 'posters') {
       renderPosters();
+    } else if (section === 'files') {
+      renderFilesHome();
     } else if (section === 'dashboard') {
       renderDashboardHome();
     } else {
