@@ -22,8 +22,14 @@ navItems.forEach(item => {
       renderRoadmap();
     } else if (section === 'pins') {
       renderPins();
+    } else if (section === 'posters') {
+      renderPosters();
+    } else if (section === 'dashboard') {
+      renderDashboardHome();
     } else {
       sectionBody.innerHTML = `<p>The ${section} section will be built in an upcoming phase.</p>`;
     }
   });
 });
+
+renderDashboardHome();
