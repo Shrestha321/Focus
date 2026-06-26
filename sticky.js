@@ -51,6 +51,11 @@ function createNoteElement(note, board) {
   const header = document.createElement('div');
   header.className = 'note-header';
 
+  const leftGroup = document.createElement('div');
+  leftGroup.style.display = 'flex';
+  leftGroup.style.alignItems = 'center';
+  leftGroup.style.gap = '6px';
+
   const colorRow = document.createElement('div');
   colorRow.className = 'note-colors';
   NOTE_COLORS.forEach(color => {
@@ -64,15 +69,29 @@ function createNoteElement(note, board) {
     colorRow.appendChild(swatch);
   });
 
+  const pinId = 'sticky-' + note.id;
+  const pinBtn = document.createElement('span');
+  pinBtn.className = 'note-pin-btn';
+  pinBtn.textContent = isPinned(pinId) ? '★' : '☆';
+  pinBtn.title = 'Pin this note';
+  pinBtn.addEventListener('click', () => {
+    const pinned = togglePin(pinId, { type: 'sticky', noteId: note.id });
+    pinBtn.textContent = pinned ? '★' : '☆';
+  });
+
+  leftGroup.appendChild(colorRow);
+  leftGroup.appendChild(pinBtn);
+
   const deleteBtn = document.createElement('span');
   deleteBtn.className = 'note-delete';
   deleteBtn.textContent = '×';
   deleteBtn.addEventListener('click', () => {
     noteEl.remove();
     deleteNote(note.id);
+    unpinById(pinId);
   });
 
-  header.appendChild(colorRow);
+  header.appendChild(leftGroup);
   header.appendChild(deleteBtn);
 
   const content = document.createElement('div');
@@ -96,6 +115,7 @@ function makeDraggable(noteEl, handle, id) {
   let startX, startY, startLeft, startTop;
 
   handle.addEventListener('mousedown', (e) => {
+    if (e.target.classList.contains('note-pin-btn') || e.target.classList.contains('note-delete') || e.target.classList.contains('color-swatch')) return;
     dragging = true;
     startX = e.clientX;
     startY = e.clientY;

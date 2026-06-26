@@ -1,6 +1,5 @@
 const ROADMAP_STORAGE_KEY = 'focus-roadmap';
 
-// Nude/pastel palette for boxes — border + soft matching background
 const BOX_COLORS = ['#c98a6b', '#8aa88a', '#c98a9a', '#c9b28a', '#a89ac9'];
 const BOX_BG_MAP = {
   '#c98a6b': '#f7ebe3',
@@ -10,7 +9,6 @@ const BOX_BG_MAP = {
   '#a89ac9': '#efeaf7'
 };
 
-// Arrow color palette (kept separate from box colors)
 const SHAPE_COLORS = ['#5b6f8a', '#5b8a6f', '#8a5b6f', '#8a7a5b', '#6f5b8a'];
 
 function getBoxBg(color) {
@@ -85,6 +83,8 @@ function renderRoadmap() {
 
     sorted.forEach(goal => {
       const status = getDeadlineStatus(goal.deadline);
+      const pinId = 'roadmap-' + goal.id;
+      const pinnedNow = isPinned(pinId);
       const item = document.createElement('div');
       item.className = 'rm-item' + (goal.done ? ' done' : '');
       item.innerHTML = `
@@ -93,6 +93,7 @@ function renderRoadmap() {
           <div class="rm-item-title">${goal.title}</div>
           ${goal.deadline ? `<div class="rm-item-deadline ${status.cls}">${status.label}</div>` : ''}
         </div>
+        <button class="rm-item-pin${pinnedNow ? ' pinned' : ''}" title="Pin">${pinnedNow ? '★' : '☆'}</button>
         <button class="rm-item-delete">×</button>
       `;
 
@@ -104,11 +105,19 @@ function renderRoadmap() {
         renderRoadmap();
       });
 
+      item.querySelector('.rm-item-pin').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pinned = togglePin(pinId, { type: 'roadmap', goalId: goal.id });
+        e.target.textContent = pinned ? '★' : '☆';
+        e.target.classList.toggle('pinned', pinned);
+      });
+
       item.querySelector('.rm-item-delete').addEventListener('click', () => {
         if (!confirm(`Delete "${goal.title}"?`)) return;
         const d = getRoadmapData();
         d.goals = d.goals.filter(g => g.id !== goal.id);
         saveRoadmapData(d);
+        unpinById(pinId);
         renderRoadmap();
       });
 
@@ -375,7 +384,6 @@ function makeArrowInteraction(el, shape, goalId) {
   el.addEventListener('mousedown', (e) => {
     if (e.target.classList.contains('rm-arrow-delete')) return;
 
-    // If the click is on the native resize handle (bottom-right corner), let the browser handle it
     const rect = el.getBoundingClientRect();
     const nearRight = e.clientX > rect.right - RESIZE_HANDLE_SIZE;
     const nearBottom = e.clientY > rect.bottom - RESIZE_HANDLE_SIZE;

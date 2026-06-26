@@ -9,7 +9,6 @@ function saveNotebookData(data) {
   localStorage.setItem(NOTEBOOK_STORAGE_KEY, JSON.stringify(data));
 }
 
-// Close any open card menus when clicking elsewhere
 document.addEventListener('click', () => {
   document.querySelectorAll('.nb-card-menu-dropdown.open').forEach(d => d.classList.remove('open'));
 });
@@ -69,6 +68,10 @@ function renderNotebookHome() {
       () => renderSubjectChapters(subject.id),
       () => {
         const d = getNotebookData();
+        const removedSubject = d.subjects.find(s => s.id === subject.id);
+        if (removedSubject) {
+          removedSubject.chapters.forEach(c => unpinById('notebook-' + c.id));
+        }
         d.subjects = d.subjects.filter(s => s.id !== subject.id);
         saveNotebookData(d);
         renderNotebookHome();
@@ -112,6 +115,7 @@ function renderSubjectChapters(subjectId) {
         const s = d.subjects.find(s => s.id === subjectId);
         s.chapters = s.chapters.filter(c => c.id !== chapter.id);
         saveNotebookData(d);
+        unpinById('notebook-' + chapter.id);
         renderSubjectChapters(subjectId);
       }
     );
@@ -145,6 +149,8 @@ function renderChapterEditor(subjectId, chapterId) {
   const data = getNotebookData();
   const subject = data.subjects.find(s => s.id === subjectId);
   const chapter = subject.chapters.find(c => c.id === chapterId);
+  const chapterPinId = 'notebook-' + chapterId;
+  const pinnedInitially = isPinned(chapterPinId);
 
   sectionBody.innerHTML = `
     <button class="nb-back-btn" id="back-to-chapters">← ${subject.name}</button>
@@ -155,6 +161,7 @@ function renderChapterEditor(subjectId, chapterId) {
       <div class="nb-color-group" id="text-color-group"></div>
       <div class="nb-color-group" id="highlight-color-group"></div>
       <button id="clear-highlight-btn" class="nb-clear-btn">Clear Highlight</button>
+      <button id="nb-pin-btn" class="nb-clear-btn${pinnedInitially ? ' pinned-active' : ''}">${pinnedInitially ? '★ Pinned' : '☆ Pin Chapter'}</button>
       <button id="add-sticky-on-page" class="nb-btn nb-btn-small">+ Sticky</button>
     </div>
     <div class="nb-color-popup" id="sticky-color-popup"></div>
@@ -165,6 +172,13 @@ function renderChapterEditor(subjectId, chapterId) {
   `;
 
   document.getElementById('back-to-chapters').addEventListener('click', () => renderSubjectChapters(subjectId));
+
+  document.getElementById('nb-pin-btn').addEventListener('click', () => {
+    const pinned = togglePin(chapterPinId, { type: 'notebook', subjectId, chapterId });
+    const btn = document.getElementById('nb-pin-btn');
+    btn.textContent = pinned ? '★ Pinned' : '☆ Pin Chapter';
+    btn.classList.toggle('pinned-active', pinned);
+  });
 
   const editor = document.getElementById('nb-editor');
   document.execCommand('styleWithCSS', false, true);
