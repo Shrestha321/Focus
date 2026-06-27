@@ -1,11 +1,11 @@
 :root {
-  --bg-main: #121212;
-  --bg-sidebar: #1a1a1a;
-  --bg-card: #1e1e1e;
-  --text-primary: #e0e0e0;
-  --text-secondary: #9a9a9a;
-  --accent: #6c63ff;
-  --border: #2a2a2a;
+  --bg-main: #f6f1e7;
+  --bg-sidebar: #efe7d8;
+  --bg-card: #ffffff;
+  --text-primary: #3d3a34;
+  --text-secondary: #8c8575;
+  --accent: #7a8f6f;
+  --border: #e3dcc9;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,7 +25,7 @@ body {
   border-right: 1px solid var(--border);
 }
 
-.logo { font-size: 1.3rem; margin-bottom: 30px; color: var(--accent); }
+.logo { font-size: 1.3rem; margin-bottom: 30px; color: var(--accent); font-weight: 700; }
 
 nav ul { list-style: none; }
 

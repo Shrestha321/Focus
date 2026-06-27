@@ -1,12 +1,14 @@
 const POSTERS_STORAGE_KEY = 'focus-posters';
+const USAGE_STORAGE_KEY = 'focus-usage';
+const USAGE_TICK_SECONDS = 15;
 
 const PRESET_POSTERS = [
-  { id: 'preset-1', text: 'Small steps every day lead to big results.', sub: 'Keep going.', gradient: 'linear-gradient(135deg, #2a1f4d, #1a3a3a)' },
-  { id: 'preset-2', text: 'Discipline is choosing what you want most over what you want now.', sub: '', gradient: 'linear-gradient(135deg, #3a2a4d, #2a3a55)' },
-  { id: 'preset-3', text: "You don't have to be perfect, just consistent.", sub: '', gradient: 'linear-gradient(135deg, #1f3a4d, #2a4d3a)' },
-  { id: 'preset-4', text: 'Focus on progress, not perfection.', sub: '', gradient: 'linear-gradient(135deg, #4d2a3a, #3a2a55)' },
-  { id: 'preset-5', text: 'One page a day is a book in a year.', sub: '', gradient: 'linear-gradient(135deg, #2a3a4d, #1f2a3a)' },
-  { id: 'preset-6', text: 'Rest, but never quit.', sub: '', gradient: 'linear-gradient(135deg, #3a3a2a, #2a4d4d)' }
+  { id: 'preset-1', text: 'Small steps every day lead to big results.', sub: 'Keep going.', gradient: 'linear-gradient(135deg, #5f7a52, #3f5a42)' },
+  { id: 'preset-2', text: 'Discipline is choosing what you want most over what you want now.', sub: '', gradient: 'linear-gradient(135deg, #a8624a, #7a4535)' },
+  { id: 'preset-3', text: "You don't have to be perfect, just consistent.", sub: '', gradient: 'linear-gradient(135deg, #5a7290, #3d5066)' },
+  { id: 'preset-4', text: 'Focus on progress, not perfection.', sub: '', gradient: 'linear-gradient(135deg, #8a7550, #5c4d35)' },
+  { id: 'preset-5', text: 'One page a day is a book in a year.', sub: '', gradient: 'linear-gradient(135deg, #4a6b52, #324a3a)' },
+  { id: 'preset-6', text: 'Rest, but never quit.', sub: '', gradient: 'linear-gradient(135deg, #6f5a7a, #4a3d52)' }
 ];
 
 function getPostersData() {
@@ -17,7 +19,7 @@ function getPostersData() {
   if (!data.dashboardItems) {
     data.dashboardItems = [];
     if (data.featuredId) {
-      data.dashboardItems.push({ instanceId: Date.now().toString(), posterId: data.featuredId, x: 20, y: 20, width: 260, height: 180 });
+      data.dashboardItems.push({ instanceId: Date.now().toString(), type: 'poster', posterId: data.featuredId, x: 20, y: 20, width: 260, height: 180 });
     }
   }
   delete data.featuredId;
@@ -46,22 +48,189 @@ function toggleDashboard(posterId) {
   if (idx !== -1) {
     d.dashboardItems.splice(idx, 1);
   } else {
-    d.dashboardItems.push({ instanceId: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 7), posterId, x: 20, y: 20, width: 260, height: 180 });
+    d.dashboardItems.push({ instanceId: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 7), type: 'poster', posterId, x: 20, y: 20, width: 260, height: 180 });
   }
   savePostersData(d);
 }
 
+/* ---------- Usage tracking ---------- */
+
+function getUsageData() {
+  const data = localStorage.getItem(USAGE_STORAGE_KEY);
+  return data ? JSON.parse(data) : {};
+}
+
+function saveUsageData(data) {
+  localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(data));
+}
+
+function pad2(n) { return n.toString().padStart(2, '0'); }
+
+function todayKey(date) {
+  const d = date || new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function formatUsageMinutes(seconds) {
+  const totalMinutes = Math.round(seconds / 60);
+  if (totalMinutes < 60) return totalMinutes + ' min';
+  const hrs = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return `${hrs}h ${mins}m`;
+}
+
+setInterval(() => {
+  if (document.visibilityState !== 'visible') return;
+  const data = getUsageData();
+  const key = todayKey();
+  data[key] = (data[key] || 0) + USAGE_TICK_SECONDS;
+  saveUsageData(data);
+
+  const todayValueEl = document.getElementById('dash-usage-today-value');
+  if (todayValueEl) todayValueEl.textContent = formatUsageMinutes(data[key]);
+
+  const chartValueEl = document.getElementById('dash-chart-value-today');
+  if (chartValueEl) chartValueEl.textContent = Math.round(data[key] / 60) + 'm';
+}, USAGE_TICK_SECONDS * 1000);
+
+function buildUsageChartHtml() {
+  const data = getUsageData();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = todayKey(d);
+    const seconds = data[key] || 0;
+    const minutes = Math.round(seconds / 60);
+    days.push({ label: d.toLocaleDateString(undefined, { weekday: 'short' }), minutes, isToday: i === 0 });
+  }
+  const maxMinutes = Math.max(...days.map(d => d.minutes), 1);
+
+  return days.map(d => {
+    const heightPct = d.minutes > 0 ? Math.max((d.minutes / maxMinutes) * 100, 6) : 2;
+    const idAttrs = d.isToday ? `id="dash-chart-bar-today"` : '';
+    const valIdAttrs = d.isToday ? `id="dash-chart-value-today"` : '';
+    return `
+      <div class="dash-chart-col">
+        <div class="dash-chart-value" ${valIdAttrs}>${d.minutes}m</div>
+        <div class="dash-chart-bar${d.isToday ? ' today' : ''}" ${idAttrs} style="height: ${heightPct}%;"></div>
+        <div class="dash-chart-label">${d.label}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- Live clock ---------- */
+
+let dashClockInterval = null;
+
+function startDashboardClock() {
+  if (dashClockInterval) clearInterval(dashClockInterval);
+  updateDashboardClock();
+  dashClockInterval = setInterval(updateDashboardClock, 1000);
+}
+
+function updateDashboardClock() {
+  const timeEl = document.getElementById('dash-clock-time');
+  const dateEl = document.getElementById('dash-clock-date');
+  if (!timeEl) {
+    clearInterval(dashClockInterval);
+    dashClockInterval = null;
+    return;
+  }
+  const now = new Date();
+  timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  dateEl.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+/* ---------- Dashboard home ---------- */
+
 function renderDashboardHome() {
   const sectionBody = document.getElementById('section-body');
   const data = getPostersData();
+  const usageData = getUsageData();
+  const todaySeconds = usageData[todayKey()] || 0;
+
+  const attendanceData = getAttendanceData();
+  let attendanceHtml = '';
+  if (attendanceData.subjects.length === 0) {
+    attendanceHtml = `<div class="dash-att-empty">No subjects tracked yet.</div>`;
+  } else {
+    attendanceHtml = `<div class="dash-att-mini-list">` + attendanceData.subjects.map(s => {
+      const stats = calcSubjectStats(s);
+      const cls = stats.percent >= 75 ? 'good' : 'warning';
+      return `<div class="dash-att-mini-row"><span class="dash-att-mini-name">${s.name}</span><span class="dash-att-mini-pct ${cls}">${stats.percent}%</span></div>`;
+    }).join('') + `</div>`;
+  }
 
   sectionBody.innerHTML = `
-    <p class="tt-hint">Add posters from the Posters section, then drag (top bar) and resize (bottom-right corner) them here to design your dashboard.</p>
+    <div class="dash-top-row">
+      <div class="dash-clock-card">
+        <div class="dash-clock-time" id="dash-clock-time">--:--:--</div>
+        <div class="dash-clock-date" id="dash-clock-date"></div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-title">Attendance Overview</div>
+        ${attendanceHtml}
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-title">Time Spent Today</div>
+        <div class="dash-usage-today-value" id="dash-usage-today-value">${formatUsageMinutes(todaySeconds)}</div>
+        <div class="dash-usage-today-sub">Keep this tab open to track your focus time.</div>
+      </div>
+    </div>
+
+    <div class="dash-chart-card">
+      <div class="dash-chart-title">Time Spent — Last 7 Days</div>
+      <div class="dash-chart-bars" id="dash-chart-bars">${buildUsageChartHtml()}</div>
+    </div>
+
+    <div class="dash-section-label">Your Board</div>
+    <p class="tt-hint">Add posters from the Posters section, or add a sticky note right here. Drag (top bar) and resize (bottom-right corner) to design your dashboard.</p>
+    <div class="nb-color-popup" id="dash-sticky-color-popup"></div>
+    <button id="dash-add-sticky-btn" class="poster-add-btn">+ Add Sticky Note</button>
     <div class="dash-poster-board" id="dash-poster-board"></div>
   `;
 
+  startDashboardClock();
+
   const board = document.getElementById('dash-poster-board');
-  data.dashboardItems.forEach(item => createDashboardPosterEl(item, board));
+  data.dashboardItems.forEach(item => createDashboardItemEl(item, board));
+
+  const colorPopup = document.getElementById('dash-sticky-color-popup');
+  document.getElementById('dash-add-sticky-btn').addEventListener('click', () => {
+    if (colorPopup.style.display === 'flex') {
+      colorPopup.style.display = 'none';
+      return;
+    }
+    colorPopup.innerHTML = '';
+    NOTE_COLORS.forEach(color => {
+      const swatch = document.createElement('span');
+      swatch.className = 'nb-popup-swatch';
+      swatch.style.background = color;
+      swatch.addEventListener('click', () => {
+        colorPopup.style.display = 'none';
+        const newItem = {
+          instanceId: Date.now().toString() + '-' + Math.random().toString(36).slice(2, 7),
+          type: 'sticky', color, text: '', x: 20, y: 20, width: 200, height: 150
+        };
+        const d = getPostersData();
+        d.dashboardItems.push(newItem);
+        savePostersData(d);
+        createDashboardItemEl(newItem, board);
+      });
+      colorPopup.appendChild(swatch);
+    });
+    colorPopup.style.display = 'flex';
+  });
+}
+
+function createDashboardItemEl(item, board) {
+  if (item.type === 'sticky') {
+    createDashboardStickyEl(item, board);
+  } else {
+    createDashboardPosterEl(item, board);
+  }
 }
 
 function createDashboardPosterEl(item, board) {
@@ -111,9 +280,59 @@ function createDashboardPosterEl(item, board) {
   makeDashPosterResizable(el, (w, h) => updateDashboardItem(item.instanceId, { width: w, height: h }));
 }
 
-// Dedicated resize tracker for dashboard posters — ignores zero-size readings,
-// which happen when an element is removed/re-rendered, so we never overwrite
-// a valid saved size with a bogus 0x0 reading.
+function createDashboardStickyEl(item, board) {
+  const el = document.createElement('div');
+  el.className = 'dash-poster-item dash-sticky-item';
+  el.style.left = item.x + 'px';
+  el.style.top = item.y + 'px';
+  el.style.width = item.width + 'px';
+  el.style.height = item.height + 'px';
+  el.style.background = item.color;
+
+  const header = document.createElement('div');
+  header.className = 'dash-poster-item-header';
+
+  const colorRow = document.createElement('div');
+  colorRow.className = 'dash-sticky-colors';
+  NOTE_COLORS.forEach(color => {
+    const dot = document.createElement('span');
+    dot.className = 'dash-sticky-color-dot';
+    dot.style.background = color;
+    dot.addEventListener('click', () => {
+      el.style.background = color;
+      updateDashboardItem(item.instanceId, { color });
+    });
+    colorRow.appendChild(dot);
+  });
+
+  const removeBtn = document.createElement('span');
+  removeBtn.className = 'dash-poster-item-remove';
+  removeBtn.textContent = '×';
+  removeBtn.addEventListener('click', () => {
+    detachDashPosterObserver(el);
+    el.remove();
+    removeDashboardItem(item.instanceId);
+  });
+
+  header.appendChild(colorRow);
+  header.appendChild(removeBtn);
+  el.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'dash-poster-item-body';
+  body.contentEditable = true;
+  body.innerText = item.text || '';
+  body.addEventListener('input', () => {
+    updateDashboardItem(item.instanceId, { text: body.innerText });
+  });
+  el.appendChild(body);
+
+  board.appendChild(el);
+
+  makeGenericDraggable(el, header, (x, y) => updateDashboardItem(item.instanceId, { x, y }));
+  makeDashPosterResizable(el, (w, h) => updateDashboardItem(item.instanceId, { width: w, height: h }));
+}
+
 const dashPosterObservers = new WeakMap();
 
 function makeDashPosterResizable(el, onResize) {

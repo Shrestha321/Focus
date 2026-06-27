@@ -10,7 +10,7 @@ const TT_DAYS = [
 ];
 const TT_START_HOUR = 7;
 const TT_END_HOUR = 21;
-const TT_COLORS = ['#5b6f8a', '#5b8a6f', '#8a5b6f', '#8a7a5b', '#6f5b8a'];
+const TT_COLORS = ['#c98a6b', '#8aa88a', '#c98a9a', '#c9b28a', '#a89ac9'];
 
 function getTimetableData() {
   const data = localStorage.getItem(TIMETABLE_STORAGE_KEY);

@@ -9,9 +9,7 @@
   font-weight: 600;
 }
 
-.add-note-btn:hover {
-  opacity: 0.9;
-}
+.add-note-btn:hover { opacity: 0.9; }
 
 .sticky-board {
   position: relative;
@@ -26,7 +24,7 @@
 .sticky-note {
   position: absolute;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
   resize: both;
   overflow: auto;
   min-width: 140px;
@@ -54,7 +52,7 @@
   height: 14px;
   border-radius: 50%;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.5);
 }
 
 .note-delete {
@@ -67,7 +65,7 @@
 .note-content {
   flex: 1;
   padding: 8px;
-  color: #fff;
+  color: #2a2a2a;
   outline: none;
   font-size: 0.85rem;
   overflow-y: auto;

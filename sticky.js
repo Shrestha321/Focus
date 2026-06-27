@@ -1,5 +1,5 @@
 const STICKY_STORAGE_KEY = 'focus-sticky-notes';
-const NOTE_COLORS = ['#3a3a55', '#5b3a55', '#3a554f', '#553a3a', '#3a4a55'];
+const NOTE_COLORS = ['#FFF59D', '#FFAB91', '#A5D6A7', '#90CAF9', '#F48FB1'];
 
 function getStickyNotes() {
   const data = localStorage.getItem(STICKY_STORAGE_KEY);
@@ -86,6 +86,7 @@ function createNoteElement(note, board) {
   deleteBtn.className = 'note-delete';
   deleteBtn.textContent = '×';
   deleteBtn.addEventListener('click', () => {
+    detachStickyObserver(noteEl);
     noteEl.remove();
     deleteNote(note.id);
     unpinById(pinId);
@@ -142,11 +143,28 @@ function makeDraggable(noteEl, handle, id) {
   });
 }
 
+// Zero-size-safe resize tracking, same fix applied to Posters and Notebook —
+// prevents a real saved size from being overwritten by a bogus 0x0 reading
+// that happens when an element is removed or the page re-renders.
+const stickyResizeObservers = new WeakMap();
+
 function makeResizable(noteEl, id) {
   const observer = new ResizeObserver(() => {
-    updateNote(id, { width: noteEl.offsetWidth, height: noteEl.offsetHeight });
+    const w = noteEl.offsetWidth;
+    const h = noteEl.offsetHeight;
+    if (w === 0 || h === 0) return;
+    updateNote(id, { width: w, height: h });
   });
   observer.observe(noteEl);
+  stickyResizeObservers.set(noteEl, observer);
+}
+
+function detachStickyObserver(noteEl) {
+  const observer = stickyResizeObservers.get(noteEl);
+  if (observer) {
+    observer.disconnect();
+    stickyResizeObservers.delete(noteEl);
+  }
 }
 
 function updateNote(id, changes) {

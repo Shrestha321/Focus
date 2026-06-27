@@ -43,7 +43,7 @@
 }
 
 .att-subject-row:last-child { border-bottom: none; }
-.att-subject-row:hover { background: rgba(255,255,255,0.03); }
+.att-subject-row:hover { background: rgba(0,0,0,0.03); }
 
 .att-subject-left {
   display: flex;
@@ -153,7 +153,7 @@
   border-radius: 8px;
   font-size: 0.85rem;
   cursor: pointer;
-  background: rgba(255,255,255,0.03);
+  background: rgba(0,0,0,0.03);
   color: var(--text-secondary);
   border: 1px solid transparent;
   transition: transform 0.1s;
@@ -171,9 +171,9 @@
 
 .att-cal-cell.today { border-color: var(--accent); }
 
-.att-cal-cell.present { background: #4f7d63; color: #fff; }
-.att-cal-cell.absent { background: #8a5050; color: #fff; }
-.att-cal-cell.holiday { background: #5c6f8a; color: #fff; }
+.att-cal-cell.present { background: #6fae8a; color: #fff; }
+.att-cal-cell.absent { background: #c97f7f; color: #fff; }
+.att-cal-cell.holiday { background: #8a9ac9; color: #fff; }
 
 .att-cal-legend {
   display: flex;
@@ -196,9 +196,9 @@
   border-radius: 50%;
 }
 
-.att-legend-dot.present { background: #4f7d63; }
-.att-legend-dot.absent { background: #8a5050; }
-.att-legend-dot.holiday { background: #5c6f8a; }
+.att-legend-dot.present { background: #6fae8a; }
+.att-legend-dot.absent { background: #c97f7f; }
+.att-legend-dot.holiday { background: #8a9ac9; }
 
 .att-cal-footer {
   display: flex;

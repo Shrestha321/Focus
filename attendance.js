@@ -52,7 +52,7 @@ function renderAttendance() {
 
   data.subjects.forEach(subject => {
     const stats = calcSubjectStats(subject);
-    const ringColor = stats.percent >= 75 ? '#4f7d63' : '#8a5050';
+    const ringColor = stats.percent >= 75 ? '#6fae8a' : '#c97f7f';
     const row = document.createElement('div');
     row.className = 'att-subject-row';
     row.innerHTML = `

@@ -127,7 +127,7 @@ function renderSubjectChapters(subjectId) {
     if (!name) return;
     const d = getNotebookData();
     const s = d.subjects.find(s => s.id === subjectId);
-    s.chapters.push({ id: Date.now().toString(), name, content: '', stickies: [] });
+    s.chapters.push({ id: Date.now().toString(), name, content: '', stickies: [], images: [] });
     saveNotebookData(d);
     renderSubjectChapters(subjectId);
   });
@@ -143,12 +143,16 @@ const SIZE_OPTIONS = [
 const TEXT_COLORS = ['#1a1a1a', '#d32f2f', '#2e7d32', '#1565c0', '#f57f17'];
 const HIGHLIGHT_COLORS = ['#FFF59D', '#A5D6A7', '#F48FB1', '#90CAF9'];
 const NOTE_PAGE_COLORS = ['#FFF59D', '#FFAB91', '#A5D6A7', '#90CAF9', '#F48FB1'];
+const NB_MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
 function renderChapterEditor(subjectId, chapterId) {
   const sectionBody = document.getElementById('section-body');
   const data = getNotebookData();
   const subject = data.subjects.find(s => s.id === subjectId);
   const chapter = subject.chapters.find(c => c.id === chapterId);
+  if (!chapter.images) chapter.images = [];
+  saveNotebookData(data);
+
   const chapterPinId = 'notebook-' + chapterId;
   const pinnedInitially = isPinned(chapterPinId);
 
@@ -163,6 +167,8 @@ function renderChapterEditor(subjectId, chapterId) {
       <button id="clear-highlight-btn" class="nb-clear-btn">Clear Highlight</button>
       <button id="nb-pin-btn" class="nb-clear-btn${pinnedInitially ? ' pinned-active' : ''}">${pinnedInitially ? '★ Pinned' : '☆ Pin Chapter'}</button>
       <button id="add-sticky-on-page" class="nb-btn nb-btn-small">+ Sticky</button>
+      <button id="add-image-on-page" class="nb-btn nb-btn-small">+ Image</button>
+      <input type="file" id="nb-image-upload-input" accept="image/*" style="display:none;">
     </div>
     <div class="nb-color-popup" id="sticky-color-popup"></div>
     <div class="nb-page-wrapper">
@@ -262,6 +268,7 @@ function renderChapterEditor(subjectId, chapterId) {
 
   const stickyLayer = document.getElementById('nb-sticky-layer');
   chapter.stickies.forEach(sticky => createPageSticky(sticky, stickyLayer, subjectId, chapterId));
+  chapter.images.forEach(image => createPageImage(image, stickyLayer, subjectId, chapterId));
 
   const colorPopup = document.getElementById('sticky-color-popup');
   document.getElementById('add-sticky-on-page').addEventListener('click', () => {
@@ -292,6 +299,42 @@ function renderChapterEditor(subjectId, chapterId) {
       colorPopup.appendChild(swatch);
     });
     colorPopup.style.display = 'flex';
+  });
+
+  document.getElementById('add-image-on-page').addEventListener('click', () => {
+    document.getElementById('nb-image-upload-input').click();
+  });
+
+  document.getElementById('nb-image-upload-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > NB_MAX_IMAGE_SIZE) {
+      alert('Image is too large. Please keep it under 3MB.');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const newImage = {
+        id: Date.now().toString(),
+        x: 40, y: 40, width: 220, height: 160,
+        data: reader.result
+      };
+      const d = getNotebookData();
+      const s = d.subjects.find(s => s.id === subjectId);
+      const c = s.chapters.find(c => c.id === chapterId);
+      if (!c.images) c.images = [];
+      c.images.push(newImage);
+      saveNotebookData(d);
+      createPageImage(newImage, stickyLayer, subjectId, chapterId);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   });
 }
 
@@ -324,6 +367,7 @@ function createPageSticky(sticky, layer, subjectId, chapterId) {
   deleteBtn.className = 'note-delete';
   deleteBtn.textContent = '×';
   deleteBtn.addEventListener('click', () => {
+    detachNbObserver(noteEl);
     noteEl.remove();
     deletePageSticky(subjectId, chapterId, sticky.id);
   });
@@ -345,6 +389,39 @@ function createPageSticky(sticky, layer, subjectId, chapterId) {
 
   makePageStickyDraggable(noteEl, header, subjectId, chapterId, sticky.id);
   makePageStickyResizable(noteEl, subjectId, chapterId, sticky.id);
+}
+
+function createPageImage(image, layer, subjectId, chapterId) {
+  const imgEl = document.createElement('div');
+  imgEl.className = 'page-image';
+  imgEl.style.left = image.x + 'px';
+  imgEl.style.top = image.y + 'px';
+  imgEl.style.width = image.width + 'px';
+  imgEl.style.height = image.height + 'px';
+
+  const header = document.createElement('div');
+  header.className = 'page-image-header';
+
+  const deleteBtn = document.createElement('span');
+  deleteBtn.className = 'page-image-delete';
+  deleteBtn.textContent = '×';
+  deleteBtn.addEventListener('click', () => {
+    detachNbObserver(imgEl);
+    imgEl.remove();
+    deletePageImage(subjectId, chapterId, image.id);
+  });
+  header.appendChild(deleteBtn);
+
+  const body = document.createElement('div');
+  body.className = 'page-image-body';
+  body.innerHTML = `<img src="${image.data}" alt="Notebook image">`;
+
+  imgEl.appendChild(header);
+  imgEl.appendChild(body);
+  layer.appendChild(imgEl);
+
+  makePageImageDraggable(imgEl, header, subjectId, chapterId, image.id);
+  makePageImageResizable(imgEl, subjectId, chapterId, image.id);
 }
 
 function makePageStickyDraggable(noteEl, handle, subjectId, chapterId, id) {
@@ -378,11 +455,64 @@ function makePageStickyDraggable(noteEl, handle, subjectId, chapterId, id) {
   });
 }
 
-function makePageStickyResizable(noteEl, subjectId, chapterId, id) {
+const nbResizeObservers = new WeakMap();
+
+function attachNbResizable(el, onResize) {
   const observer = new ResizeObserver(() => {
-    updatePageSticky(subjectId, chapterId, id, { width: noteEl.offsetWidth, height: noteEl.offsetHeight });
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    if (w === 0 || h === 0) return;
+    onResize(w, h);
   });
-  observer.observe(noteEl);
+  observer.observe(el);
+  nbResizeObservers.set(el, observer);
+}
+
+function detachNbObserver(el) {
+  const observer = nbResizeObservers.get(el);
+  if (observer) {
+    observer.disconnect();
+    nbResizeObservers.delete(el);
+  }
+}
+
+function makePageStickyResizable(noteEl, subjectId, chapterId, id) {
+  attachNbResizable(noteEl, (w, h) => updatePageSticky(subjectId, chapterId, id, { width: w, height: h }));
+}
+
+function makePageImageDraggable(imgEl, handle, subjectId, chapterId, id) {
+  let dragging = false;
+  let startX, startY, startLeft, startTop;
+
+  handle.addEventListener('mousedown', (e) => {
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = imgEl.offsetLeft;
+    startTop = imgEl.offsetTop;
+    imgEl.style.zIndex = 10;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    imgEl.style.left = (startLeft + dx) + 'px';
+    imgEl.style.top = (startTop + dy) + 'px';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (dragging) {
+      dragging = false;
+      imgEl.style.zIndex = 1;
+      updatePageImage(subjectId, chapterId, id, { x: imgEl.offsetLeft, y: imgEl.offsetTop });
+    }
+  });
+}
+
+function makePageImageResizable(imgEl, subjectId, chapterId, id) {
+  attachNbResizable(imgEl, (w, h) => updatePageImage(subjectId, chapterId, id, { width: w, height: h }));
 }
 
 function updatePageSticky(subjectId, chapterId, id, changes) {
@@ -401,5 +531,26 @@ function deletePageSticky(subjectId, chapterId, id) {
   const s = d.subjects.find(s => s.id === subjectId);
   const c = s.chapters.find(c => c.id === chapterId);
   c.stickies = c.stickies.filter(st => st.id !== id);
+  saveNotebookData(d);
+}
+
+function updatePageImage(subjectId, chapterId, id, changes) {
+  const d = getNotebookData();
+  const s = d.subjects.find(s => s.id === subjectId);
+  const c = s.chapters.find(c => c.id === chapterId);
+  if (!c.images) c.images = [];
+  const idx = c.images.findIndex(im => im.id === id);
+  if (idx !== -1) {
+    c.images[idx] = { ...c.images[idx], ...changes };
+    saveNotebookData(d);
+  }
+}
+
+function deletePageImage(subjectId, chapterId, id) {
+  const d = getNotebookData();
+  const s = d.subjects.find(s => s.id === subjectId);
+  const c = s.chapters.find(c => c.id === chapterId);
+  if (!c.images) c.images = [];
+  c.images = c.images.filter(im => im.id !== id);
   saveNotebookData(d);
 }

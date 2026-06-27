@@ -76,11 +76,165 @@
 .poster-action-btn:hover { background: rgba(0,0,0,0.6); }
 
 .poster-action-btn.featured {
-  background: #d9b35c;
+  background: #c9a86b;
   color: #1a1a1a;
 }
 
-/* Dashboard canvas */
+/* Dashboard top widgets */
+
+.dash-top-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.dash-clock-card {
+  background: linear-gradient(135deg, #7a8f6f, #4f6347);
+  color: #fff;
+  border-radius: 14px;
+  padding: 22px 26px;
+  min-width: 220px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dash-clock-time {
+  font-size: 2.1rem;
+  font-weight: 700;
+  font-family: Georgia, serif;
+  letter-spacing: 1px;
+}
+
+.dash-clock-date {
+  font-size: 0.82rem;
+  opacity: 0.88;
+  margin-top: 6px;
+}
+
+.dash-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 22px;
+  flex: 1;
+  min-width: 220px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.dash-stat-title {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.dash-att-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 90px;
+  overflow-y: auto;
+}
+
+.dash-att-mini-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.dash-att-mini-name { color: var(--text-primary); font-weight: 600; }
+
+.dash-att-mini-pct {
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.dash-att-mini-pct.good { background: rgba(111,174,138,0.18); color: #4f7d63; }
+.dash-att-mini-pct.warning { background: rgba(201,127,127,0.18); color: #a85a5a; }
+
+.dash-att-empty { color: var(--text-secondary); font-size: 0.85rem; }
+
+.dash-usage-today-value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #7a8f6f;
+  font-family: Georgia, serif;
+}
+
+.dash-usage-today-sub {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+.dash-chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.dash-chart-title {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.dash-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  height: 140px;
+}
+
+.dash-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+}
+
+.dash-chart-bar {
+  width: 100%;
+  max-width: 34px;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, #aac79c, #7a8f6f);
+  min-height: 4px;
+  transition: height 0.3s;
+}
+
+.dash-chart-bar.today {
+  background: linear-gradient(180deg, #e0bd72, #b8923f);
+}
+
+.dash-chart-label { font-size: 0.7rem; color: var(--text-secondary); }
+.dash-chart-value { font-size: 0.68rem; color: var(--text-primary); font-weight: 600; }
+
+.dash-section-label {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 6px 0 10px;
+  color: var(--text-primary);
+  font-family: Georgia, serif;
+}
+
+/* Dashboard canvas (posters + sticky notes) */
 
 .dash-poster-board {
   position: relative;
@@ -99,7 +253,7 @@
   resize: both;
   min-width: 160px;
   min-height: 120px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
 }
@@ -107,11 +261,29 @@
 .dash-poster-item-header {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   padding: 4px 6px;
   cursor: move;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0,0,0,0.2);
   position: relative;
   z-index: 2;
+}
+
+.dash-sticky-item .dash-poster-item-header {
+  justify-content: space-between;
+}
+
+.dash-sticky-colors {
+  display: flex;
+  gap: 4px;
+}
+
+.dash-sticky-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.25);
 }
 
 .dash-poster-item-remove {
@@ -158,4 +330,13 @@
   font-size: 0.75rem;
   opacity: 0.85;
   margin-top: 4px;
+}
+
+.dash-sticky-item .dash-poster-item-body {
+  color: #2a2a2a;
+  padding: 10px;
+  outline: none;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  display: block;
 }
